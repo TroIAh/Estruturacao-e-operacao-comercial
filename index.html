@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlugAI Gym · Assessoria de Inteligência Comercial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .section-card { background-color: #ffffff; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 2rem; transition: transform 0.3s, box-shadow 0.3s; }
+        .section-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .highlight { background-color: #e0f2fe; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-weight: 600; color: #0369a1; }
+        body { background-color: #f3f4f6; }
+        .checklist-item { transition: background-color 0.2s; }
+        .checklist-item.checked { background-color: #dcfce7; border-color: #22c55e; }
+        
+        .editable-summary {
+            border: 2px dashed #cbd5e1;
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            min-height: 100px;
+            outline: none;
+        }
+        .editable-summary:focus {
+            border-color: #3b82f6;
+            background-color: #ffffff;
+        }
+
+        @media print {
+            .print-section {
+                page-break-before: always;
+            }
+            .no-print {
+                display: none;
+            }
+            body {
+                background-color: white;
+                padding: 0;
+                margin: 0;
+            }
+            .section-card {
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body onload="initializePage()">
+
+    <!-- Custom Alert -->
+    <div id="custom-alert" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+            <h3 class="text-xl font-bold text-red-600 mb-4">Atenção!</h3>
+            <p id="alert-message" class="text-gray-700 mb-6"></p>
+            <button onclick="hideAlert()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg">Entendi</button>
+        </div>
+    </div>
+
+    <!-- Cabeçalho reduzido -->
+    <header class="bg-blue-800 text-white py-6 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">
+                <span class="block">· Assessoria de Inteligência Comercial · 2026</span>
+            </h1>
+            <p class="text-base opacity-80">Baseado no relatório de 16 de março · Validade 30 dias</p>
+        </div>
+    </header>
+
+    <!-- Visão de números da assessoria (fixa no topo) -->
+    <div class="sticky top-0 z-10 bg-blue-900/80 backdrop-blur-sm text-white shadow-lg py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-lg font-semibold mb-2 opacity-90">📊 Resumo da Assessoria (cenário atual)</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                <div>
+                    <p class="text-xs opacity-75">Blocos contratados</p>
+                    <p id="quick-blocos" class="text-2xl font-bold">0</p>
+                </div>
+                <div>
+                    <p class="text-xs opacity-75">Valor dos blocos</p>
+                    <p id="quick-valor-blocos" class="text-2xl font-bold">R$ 0</p>
+                </div>
+                <div>
+                    <p class="text-xs opacity-75">Comissão implantação</p>
+                    <p id="quick-comissao-imp" class="text-2xl font-bold">R$ 0</p>
+                </div>
+                <div>
+                    <p class="text-xs opacity-75">Comissão recorrência</p>
+                    <p id="quick-comissao-rec" class="text-2xl font-bold">R$ 0</p>
+                </div>
+                <div>
+                    <p class="text-xs opacity-75">Total assessoria (mês 1)</p>
+                    <p id="quick-total" class="text-2xl font-bold">R$ 0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campo de resumo editável -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">Resumo da Proposta (edite conforme necessário):</label>
+            <div id="proposal-summary" class="editable-summary w-full" contenteditable="true">
+                Esta proposta contempla a estruturação da máquina de vendas da PlugAI Gym através da implementação dos blocos de operação comercial selecionados. Cada bloco tem duração estimada de 3 semanas, totalizando até 12 semanas para a implementação completa. Além disso, incluímos comissionamento sobre novas redes contratadas. Os valores podem ser simulados abaixo.
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Clique no texto acima para editar. As alterações serão incluídas no PDF.</p>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Seção 1: Contrate os Blocos de Estruturação / Operação -->
+        <section class="mb-16 print-section">
+            <div class="section-card bg-indigo-50 border-t-4 border-indigo-600">
+                <h2 class="text-3xl font-bold text-indigo-800 mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Contrate os Blocos de Estruturação / Operação
+                </h2>
+                <p class="text-lg text-gray-700 mb-2">Marque os blocos que você deseja que a assessoria implemente. Cada bloco leva cerca de 3 semanas para ser concluído.</p>
+                <p class="text-md text-indigo-600 mb-4">Valor: R$ 4.000 por bloco individual. Se todos os 4 forem contratados, R$ 3.500 cada (total R$ 14.000).</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="blocos-checklist">
+                    <!-- Bloco 1 (inicia marcado) -->
+                    <div class="checklist-item p-4 bg-white rounded-lg border-2 border-gray-200 cursor-pointer flex items-start checked" data-bloco="1" onclick="toggleBloco(this)">
+                        <div class="flex-1"><h3 class="font-bold text-lg text-gray-800">Bloco 1 · Organização da base comercial</h3><p class="text-sm text-gray-600">Pipeline, scripts, CRM e coleta de informações de clientes</p></div>
+                        <div class="ml-3 mt-1"><span class="check-indicator w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center text-indigo-600 text-lg font-bold bg-indigo-500 text-white border-indigo-500">✓</span></div>
+                    </div>
+                    <!-- Bloco 2 -->
+                    <div class="checklist-item p-4 bg-white rounded-lg border-2 border-gray-200 cursor-pointer flex items-start" data-bloco="2" onclick="toggleBloco(this)">
+                        <div class="flex-1"><h3 class="font-bold text-lg text-gray-800">Bloco 2 · Geração de leads qualificados</h3><p class="text-sm text-gray-600">Definição do cliente ideal, tratamento de listas e prospecção ativa</p></div>
+                        <div class="ml-3 mt-1"><span class="check-indicator w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center text-indigo-600 text-lg font-bold"></span></div>
+                    </div>
+                    <!-- Bloco 3 -->
+                    <div class="checklist-item p-4 bg-white rounded-lg border-2 border-gray-200 cursor-pointer flex items-start" data-bloco="3" onclick="toggleBloco(this)">
+                        <div class="flex-1"><h3 class="font-bold text-lg text-gray-800">Bloco 3 · Desenvolvimento e nutrição</h3><p class="text-sm text-gray-600">Primeiros contatos, qualificação de leads (MQL, PQL) e acompanhamento</p></div>
+                        <div class="ml-3 mt-1"><span class="check-indicator w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center text-indigo-600 text-lg font-bold"></span></div>
+                    </div>
+                    <!-- Bloco 4 -->
+                    <div class="checklist-item p-4 bg-white rounded-lg border-2 border-gray-200 cursor-pointer flex items-start" data-bloco="4" onclick="toggleBloco(this)">
+                        <div class="flex-1"><h3 class="font-bold text-lg text-gray-800">Bloco 4 · Fechamento e gestão de vendas</h3><p class="text-sm text-gray-600">Negociação, gestão de objeções e conversão em contratos</p></div>
+                        <div class="ml-3 mt-1"><span class="check-indicator w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center text-indigo-600 text-lg font-bold"></span></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-white rounded-lg shadow-inner">
+                    <p class="text-lg font-medium text-gray-700">
+                        <span class="text-indigo-700 font-bold">Blocos contratados:</span> <span id="blocos-contratados">1</span> de 4.
+                    </p>
+                    <p class="text-md text-gray-600 mt-2" id="diagnostico-mensagem">
+                        1 bloco contratado por R$ 4.000.
+                    </p>
+                    <p class="text-sm text-indigo-500 mt-2">
+                        ⏱️ Duração estimada: 3 semanas por bloco.
+                    </p>
+                </div>
+
+                <div class="mt-6 p-4 bg-indigo-100 rounded-lg text-indigo-800 font-medium italic">
+                    "Cansado de perder leads no WhatsApp? Ative seus 4 funcionários digitais e tenha atendimento e cobrança padrão 24/7."
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 2: Máquina de Vendas (entregas simplificadas) -->
+        <section class="mb-16 print-section">
+            <div class="section-card bg-green-50 border-t-4 border-green-600">
+                <h2 class="text-3xl font-bold text-green-800 mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Máquina de Vendas · Os 4 Blocos
+                </h2>
+                <p class="text-xl text-green-700 font-semibold mb-6">Confira os blocos selecionados e o investimento correspondente.</p>
+                
+                <div class="overflow-x-auto mb-6">
+                    <table class="min-w-full bg-white rounded-xl overflow-hidden">
+                        <thead class="bg-green-100"><tr><th class="p-3 text-left">Bloco</th><th class="p-3 text-left">Entregas</th><th class="p-3 text-left">Valor (se contratado)</th></tr></thead>
+                        <tbody>
+                            <tr><td class="p-3 font-medium">1. Organização da base comercial</td><td class="p-3">Pipeline, scripts, CRM e coleta de informações de clientes</td><td class="p-3" id="valor-bloco1">R$ 4.000</td></tr>
+                            <tr><td class="p-3 font-medium">2. Geração de leads qualificados</td><td class="p-3">Definição do cliente ideal, tratamento de listas e prospecção ativa</td><td class="p-3" id="valor-bloco2">R$ 0,00 (não contratado)</td></tr>
+                            <tr><td class="p-3 font-medium">3. Desenvolvimento e nutrição</td><td class="p-3">Primeiros contatos, qualificação de leads (MQL, PQL) e acompanhamento</td><td class="p-3" id="valor-bloco3">R$ 0,00 (não contratado)</td></tr>
+                            <tr><td class="p-3 font-medium">4. Fechamento e gestão de vendas</td><td class="p-3">Negociação, gestão de objeções e conversão em contratos</td><td class="p-3" id="valor-bloco4">R$ 0,00 (não contratado)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="bg-green-100 p-4 rounded-lg">
+                    <p class="text-lg font-bold text-green-800">Total em estruturação: <span id="total-blocos-valor">R$ 4.000</span></p>
+                    <p class="text-sm text-green-700">*Valor por bloco: R$ 4.000 (individual) ou R$ 3.500 cada se todos os 4 forem contratados.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Viabilidade Financeira -->
+        <section class="mb-16 print-section">
+            <div class="section-card bg-purple-50 border-t-4 border-purple-600">
+                <h2 class="text-3xl font-bold text-purple-800 mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Viabilidade Financeira
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white p-5 rounded-lg shadow">
+                        <h3 class="font-bold text-lg text-purple-700">Implementação (única por rede)</h3>
+                        <p class="text-2xl font-bold text-gray-800">R$ 20.000<span class="text-sm font-normal text-gray-500">/rede</span></p>
+                        <p class="text-sm text-gray-600">independente do número de unidades</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow">
+                        <h3 class="font-bold text-lg text-purple-700">Mensalidade por unidade</h3>
+                        <p class="text-2xl font-bold text-gray-800">R$ 6.500<span class="text-sm font-normal text-gray-500"> (cheio)</span> / R$ 5.525 (negociado)</p>
+                        <p class="text-sm text-gray-600 mt-1">Número de unidades por rede: <span id="unidades-por-rede-exemplo">3</span></p>
+                        <p class="text-sm text-gray-600">Total por rede: <span id="total-por-rede-exemplo">R$ 19.500</span> (cheio) ou <span id="total-por-rede-negociado-exemplo">R$ 16.575</span> (negociado)</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow mb-6">
+                    <h3 class="font-bold text-lg text-purple-700">Exemplo: 1 rede com <span id="exemplo-unidades">3</span> unidades</h3>
+                    <p><span class="font-semibold">Cenário cheio:</span> R$ 20.000 (implantação) + R$ <span id="exemplo-mensalidade-cheia">19.500</span> (1ª mensalidade) = R$ <span id="exemplo-total-cheio">39.500</span> no primeiro mês.</p>
+                    <p><span class="font-semibold">Cenário negociado:</span> R$ 20.000 + R$ <span id="exemplo-mensalidade-negociada">16.575</span> = R$ <span id="exemplo-total-negociado">36.575</span> no primeiro mês.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 4: Calculadora -->
+        <section id="calculadora" class="mb-16 print-section">
+            <div class="section-card bg-yellow-50 border-t-4 border-yellow-500">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    📈 Simule o Negócio (Faturamento + Remuneração)
+                </h2>
+                <p class="text-lg text-gray-700 mb-6">Acompanhe o faturamento total da PlugAI e a remuneração da assessoria (comissão sobre vendas + blocos contratados).</p>
+
+                <!-- Modelo de comissionamento -->
+                <div class="mb-6 p-6 bg-white rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">1. Modelo de comissionamento (sobre vendas)</h3>
+                    <label class="flex items-center p-3 mb-2 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                        <input type="radio" name="commission_model" value="padrao" class="form-radio h-5 w-5 text-gray-600" checked onchange="calculateCommission()">
+                        <span class="ml-3 text-lg font-semibold">Padrão (5% da recorrência por unidade + 20% da implantação por rede)</span>
+                    </label>
+                    <label class="flex items-center p-3 mb-2 bg-blue-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-blue-500">
+                        <input type="radio" name="commission_model" value="acelerado" class="form-radio h-5 w-5 text-blue-600" onchange="calculateCommission()">
+                        <span class="ml-3 text-lg font-semibold text-blue-800">Acelerado (8% recorrência + 25% implantação)</span>
+                    </label>
+                    <label class="flex items-center p-3 bg-purple-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-purple-500">
+                        <input type="radio" name="commission_model" value="premium" class="form-radio h-5 w-5 text-purple-600" onchange="calculateCommission()">
+                        <span class="ml-3 text-lg font-semibold text-purple-800">Premium (12% recorrência + 30% implantação)</span>
+                    </label>
+                </div>
+
+                <!-- Cenário de mensalidade e número de unidades por rede -->
+                <div class="mb-6 p-6 bg-white rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">2. Configuração da mensalidade</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Valor da mensalidade -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Valor por unidade:</label>
+                            <label class="flex items-center p-3 mb-2 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                                <input type="radio" name="mensalidade_cenario" value="cheia" class="form-radio h-5 w-5 text-gray-600" checked onchange="calculateCommission()">
+                                <span class="ml-3 text-lg font-semibold">Cheio: R$ 6.500 / unidade</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-green-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-green-500">
+                                <input type="radio" name="mensalidade_cenario" value="negociada" class="form-radio h-5 w-5 text-green-600" onchange="calculateCommission()">
+                                <span class="ml-3 text-lg font-semibold text-green-800">Negociado: R$ 5.525 / unidade</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Número de unidades por rede (dropdown) -->
+                        <div>
+                            <label for="unidades-por-rede" class="block text-sm font-semibold text-gray-700 mb-2">Unidades por rede:</label>
+                            <select id="unidades-por-rede" name="unidades-por-rede" class="w-full p-3 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-yellow-400" onchange="calculateCommission()">
+                                <option value="3" selected>3 unidades (mínimo)</option>
+                                <option value="4">4 unidades</option>
+                                <option value="5">5 unidades</option>
+                                <option value="6">6 unidades</option>
+                                <option value="7">7 unidades</option>
+                                <option value="8">8 unidades</option>
+                                <option value="9">9 unidades</option>
+                                <option value="10">10 unidades</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">*Cada rede deve ter no mínimo 3 unidades.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Número de redes -->
+                <div class="mb-6 p-6 bg-white rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">3. Contratos (redes) fechados por mês</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 border-gray-500 has-[:checked]:border-gray-500">
+                            <input type="radio" name="contracts" value="0" class="form-radio h-5 w-5 text-gray-600" checked onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">0 redes</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                            <input type="radio" name="contracts" value="1" class="form-radio h-5 w-5 text-gray-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">1 rede</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                            <input type="radio" name="contracts" value="2" class="form-radio h-5 w-5 text-gray-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">2 redes</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                            <input type="radio" name="contracts" value="3" class="form-radio h-5 w-5 text-gray-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">3 redes</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-green-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-green-500">
+                            <input type="radio" name="contracts" value="4" class="form-radio h-5 w-5 text-green-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg font-semibold text-green-700">4 redes (teto)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div class="bg-gray-900 text-white rounded-xl p-8 shadow-2xl">
+                    <h3 class="text-2xl font-bold mb-6 text-yellow-400">Projeção para o Primeiro Mês</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Total Implantação (redes)</p>
+                            <p id="display-total-implantacao" class="text-2xl font-mono text-white">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Total Mensalidade (unidades)</p>
+                            <p id="display-total-mensalidade" class="text-2xl font-mono text-white">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Faturamento Total (mês 1)</p>
+                            <p id="display-faturamento-total" class="text-2xl font-mono text-yellow-300">R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Comissão Implantação</p>
+                            <p id="display-implantacao" class="text-xl font-mono text-white">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Comissão Recorrência</p>
+                            <p id="display-recorrencia" class="text-xl font-mono text-green-400">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Implementação de Blocos</p>
+                            <p id="display-blocos" class="text-xl font-mono text-blue-400">R$ 4.000,00</p>
+                            <p class="text-xs text-gray-500" id="detalhe-blocos">1 bloco (R$ 4.000 cada)</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm">Total Assessoria (mês 1)</p>
+                            <p id="display-total-assessoria" class="text-xl font-mono text-white">R$ 4.000,00</p>
+                            <p id="display-acumulado" class="text-xs text-yellow-400 italic">Anual: R$ 4.000,00</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 text-sm text-gray-300 border-t border-gray-700 pt-4">
+                        <p><span class="font-semibold">Redes:</span> <span id="total-redes">0</span> · 
+                        <span class="font-semibold">Unidades por rede:</span> <span id="unidades-por-rede-valor">3</span> · 
+                        <span class="font-semibold">Total unidades:</span> <span id="total-unidades">0</span> · 
+                        <span class="font-semibold">Valor unidade:</span> <span id="valor-unidade">R$ 6.500</span> · 
+                        <span class="font-semibold">Blocos contratados:</span> <span id="blocos-contratados-total">1</span></p>
+                    </div>
+                </div>
+
+                <!-- Botões de ação: agora com "Gerar Resumo" em vez de WhatsApp -->
+                <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="gerarResumo()" class="no-print inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-extrabold rounded-xl shadow-lg text-white bg-blue-600 hover:bg-blue-700 transition duration-300 transform hover:scale-[1.02]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        GERAR RESUMO FORMATADO
+                    </button>
+                    <button onclick="window.print()" class="no-print inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-extrabold rounded-xl shadow-lg text-white bg-green-500 hover:bg-green-600 transition duration-300 transform hover:scale-[1.02]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        EXPORTAR PDF (IMPRIMIR)
+                    </button>
+                </div>
+
+                <!-- Área de resumo formatado -->
+                <div class="mt-8 p-6 bg-white rounded-xl shadow-md no-print">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">📋 Resumo da Simulação (copie e cole):</label>
+                    <textarea id="resumo-texto" rows="8" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-sm" readonly onclick="this.select()">Clique em "GERAR RESUMO" para visualizar.</textarea>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 text-center">
+        <p class="opacity-70">&copy; 2026 Assessoria de Inteligência Organizacional · PlugAI Gym. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        // Funções auxiliares
+        const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+        function showAlert(msg) {
+            document.getElementById('alert-message').innerText = msg;
+            document.getElementById('custom-alert').classList.remove('hidden');
+            document.getElementById('custom-alert').classList.add('flex');
+        }
+        function hideAlert() {
+            document.getElementById('custom-alert').classList.add('hidden');
+            document.getElementById('custom-alert').classList.remove('flex');
+        }
+
+        // Toggle dos blocos
+        function toggleBloco(element) {
+            element.classList.toggle('checked');
+            const indicator = element.querySelector('.check-indicator');
+            if (element.classList.contains('checked')) {
+                indicator.innerHTML = '✓';
+                indicator.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+            } else {
+                indicator.innerHTML = '';
+                indicator.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500');
+            }
+            updateBlocosInfo();
+            calculateCommission();
+        }
+
+        function updateBlocosInfo() {
+            const checked = document.querySelectorAll('.checklist-item.checked').length;
+            document.getElementById('blocos-contratados').innerText = checked;
+            document.getElementById('blocos-contratados-total').innerText = checked;
+
+            let valorUnitario = 4000;
+            if (checked === 4) {
+                valorUnitario = 3500;
+            }
+            const totalBlocos = checked * valorUnitario;
+
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`valor-bloco${i}`);
+                if (el) {
+                    const marcado = document.querySelector(`.checklist-item[data-bloco="${i}"]`)?.classList.contains('checked');
+                    el.innerText = marcado ? formatCurrency(valorUnitario) : 'R$ 0,00 (não contratado)';
+                }
+            }
+
+            document.getElementById('total-blocos-valor').innerText = formatCurrency(totalBlocos);
+
+            const msg = checked === 0 ? 'Nenhum bloco contratado.' :
+                        checked === 4 ? 'Pacote completo! Valor especial de R$ 3.500 por bloco.' :
+                        `${checked} bloco(s) contratado(s) por R$ 4.000 cada.`;
+            document.getElementById('diagnostico-mensagem').innerText = msg;
+        }
+
+        function getSelectedRadioValue(name) {
+            const radio = document.querySelector(`input[name="${name}"]:checked`);
+            return radio ? radio.value : null;
+        }
+
+        function getUnidadesPorRede() {
+            const select = document.getElementById('unidades-por-rede');
+            return parseInt(select.value, 10);
+        }
+
+        function calculateCommission() {
+            try {
+                const implantacaoPorRede = 20000;
+                const unidadesPorRede = getUnidadesPorRede();
+
+                const cenario = getSelectedRadioValue('mensalidade_cenario') || 'cheia';
+                const mensalidadePorUnidade = cenario === 'cheia' ? 6500 : 5525;
+
+                const modelo = getSelectedRadioValue('commission_model') || 'padrao';
+                let percRec, percImp;
+                if (modelo === 'padrao') { percRec = 0.05; percImp = 0.20; }
+                else if (modelo === 'acelerado') { percRec = 0.08; percImp = 0.25; }
+                else { percRec = 0.12; percImp = 0.30; }
+
+                const numRedes = parseInt(getSelectedRadioValue('contracts') || '0', 10);
+                const totalUnidades = numRedes * unidadesPorRede;
+
+                const totalImplantacao = numRedes * implantacaoPorRede;
+                const totalMensalidade = totalUnidades * mensalidadePorUnidade;
+                const faturamentoTotalMes1 = totalImplantacao + totalMensalidade;
+
+                const comissaoImp = totalImplantacao * percImp;
+                const comissaoRec = totalMensalidade * percRec;
+
+                const blocosMarcados = document.querySelectorAll('.checklist-item.checked').length;
+                let valorBlocos = 0;
+                if (blocosMarcados > 0) {
+                    if (blocosMarcados === 4) {
+                        valorBlocos = 3500 * 4;
+                    } else {
+                        valorBlocos = 4000 * blocosMarcados;
+                    }
+                }
+
+                const totalAssessoriaMes1 = comissaoImp + comissaoRec + valorBlocos;
+                const projecaoAnualAssessoria = comissaoImp + (comissaoRec * 12) + valorBlocos;
+
+                // Atualizar DOM principal
+                document.getElementById('display-total-implantacao').innerText = formatCurrency(totalImplantacao);
+                document.getElementById('display-total-mensalidade').innerText = formatCurrency(totalMensalidade);
+                document.getElementById('display-faturamento-total').innerText = formatCurrency(faturamentoTotalMes1);
+                document.getElementById('display-implantacao').innerText = formatCurrency(comissaoImp);
+                document.getElementById('display-recorrencia').innerText = formatCurrency(comissaoRec);
+                document.getElementById('display-blocos').innerText = formatCurrency(valorBlocos);
+                document.getElementById('detalhe-blocos').innerText = `${blocosMarcados} blocos (${blocosMarcados === 4 ? 'R$ 3.500 cada' : 'R$ 4.000 cada'})`;
+                document.getElementById('display-total-assessoria').innerText = formatCurrency(totalAssessoriaMes1);
+                document.getElementById('display-acumulado').innerText = `Projeção anual: ${formatCurrency(projecaoAnualAssessoria)}`;
+
+                document.getElementById('total-redes').innerText = numRedes;
+                document.getElementById('unidades-por-rede-valor').innerText = unidadesPorRede;
+                document.getElementById('total-unidades').innerText = totalUnidades;
+                document.getElementById('valor-unidade').innerText = formatCurrency(mensalidadePorUnidade);
+
+                // Atualizar visão rápida no topo
+                document.getElementById('quick-blocos').innerText = blocosMarcados;
+                document.getElementById('quick-valor-blocos').innerText = formatCurrency(valorBlocos);
+                document.getElementById('quick-comissao-imp').innerText = formatCurrency(comissaoImp);
+                document.getElementById('quick-comissao-rec').innerText = formatCurrency(comissaoRec);
+                document.getElementById('quick-total').innerText = formatCurrency(totalAssessoriaMes1);
+
+                // Atualizar textos da seção de viabilidade (exemplos)
+                document.getElementById('unidades-por-rede-exemplo').innerText = unidadesPorRede;
+                const totalCheioRede = unidadesPorRede * 6500;
+                const totalNegociadoRede = unidadesPorRede * 5525;
+                document.getElementById('total-por-rede-exemplo').innerText = formatCurrency(totalCheioRede);
+                document.getElementById('total-por-rede-negociado-exemplo').innerText = formatCurrency(totalNegociadoRede);
+                document.getElementById('exemplo-unidades').innerText = unidadesPorRede;
+                document.getElementById('exemplo-mensalidade-cheia').innerText = totalCheioRede.toFixed(2).replace('.', ',');
+                document.getElementById('exemplo-total-cheio').innerText = (20000 + totalCheioRede).toFixed(2).replace('.', ',');
+                document.getElementById('exemplo-mensalidade-negociada').innerText = totalNegociadoRede.toFixed(2).replace('.', ',');
+                document.getElementById('exemplo-total-negociado').innerText = (20000 + totalNegociadoRede).toFixed(2).replace('.', ',');
+
+                // Não geramos mais link do WhatsApp, mas chamamos uma função para atualizar o resumo se desejado
+                // Podemos atualizar o resumo automaticamente ou deixar para o botão.
+                // Vamos atualizar automaticamente ao calcular:
+                gerarResumo();
+            } catch (e) { console.error(e); }
+        }
+
+        function gerarResumo() {
+            // Pega os dados atuais
+            const blocos = document.querySelectorAll('.checklist-item.checked').length;
+            const numRedes = parseInt(getSelectedRadioValue('contracts') || '0', 10);
+            const unidadesPorRede = getUnidadesPorRede();
+            const totalUnidades = numRedes * unidadesPorRede;
+            const cenario = getSelectedRadioValue('mensalidade_cenario') || 'cheia';
+            const mensalidadePorUnidade = cenario === 'cheia' ? 6500 : 5525;
+            const modelo = getSelectedRadioValue('commission_model') || 'padrao';
+            let percRec, percImp, modeloNome;
+            if (modelo === 'padrao') { percRec = 0.05; percImp = 0.20; modeloNome = 'Padrão'; }
+            else if (modelo === 'acelerado') { percRec = 0.08; percImp = 0.25; modeloNome = 'Acelerado'; }
+            else { percRec = 0.12; percImp = 0.30; modeloNome = 'Premium'; }
+
+            const totalImplantacao = numRedes * 20000;
+            const totalMensalidade = totalUnidades * mensalidadePorUnidade;
+            const faturamentoTotal = totalImplantacao + totalMensalidade;
+
+            const comissaoImp = totalImplantacao * percImp;
+            const comissaoRec = totalMensalidade * percRec;
+
+            let valorBlocos = 0;
+            if (blocos > 0) {
+                if (blocos === 4) valorBlocos = 3500 * 4;
+                else valorBlocos = 4000 * blocos;
+            }
+
+            const totalAssessoria = comissaoImp + comissaoRec + valorBlocos;
+            const projecaoAnual = comissaoImp + (comissaoRec * 12) + valorBlocos;
+
+            const summaryText = document.getElementById('proposal-summary')?.innerText || 'Resumo da proposta';
+
+            // Monta o texto formatado
+            const resumo = `
+${summaryText}
+
+============================================
+           RESUMO DA SIMULAÇÃO
+============================================
+
+CONFIGURAÇÕES:
+- Blocos contratados: ${blocos} de 4 (valor: ${formatCurrency(valorBlocos)})
+- Modelo de comissionamento: ${modeloNome} (${percImp*100}% implantação + ${percRec*100}% recorrência)
+- Mensalidade: ${cenario === 'cheia' ? 'Cheia (R$ 6.500/unidade)' : 'Negociada (R$ 5.525/unidade)'}
+- Redes contratadas: ${numRedes}
+- Unidades por rede: ${unidadesPorRede}
+- Total de unidades: ${totalUnidades}
+
+FATURAMENTO PLUGAI (MÊS 1):
+- Implantação: ${formatCurrency(totalImplantacao)}
+- Mensalidade: ${formatCurrency(totalMensalidade)}
+- Total: ${formatCurrency(faturamentoTotal)}
+
+REMUNERAÇÃO DA ASSESSORIA (MÊS 1):
+- Comissão de implantação: ${formatCurrency(comissaoImp)}
+- Comissão de recorrência: ${formatCurrency(comissaoRec)}
+- Implementação de blocos: ${formatCurrency(valorBlocos)}
+- Total no primeiro mês: ${formatCurrency(totalAssessoria)}
+- Projeção anual: ${formatCurrency(projecaoAnual)}
+
+============================================
+            `;
+
+            document.getElementById('resumo-texto').value = resumo;
+        }
+
+        function initializePage() {
+            // Garantir que o bloco 1 esteja marcado (já está no HTML)
+            // Garantir que a opção 0 redes esteja selecionada
+            document.querySelector('input[name="contracts"][value="0"]').checked = true;
+            
+            // Atualizar informações
+            updateBlocosInfo();
+            calculateCommission();
+        }
+
+        window.addEventListener('load', initializePage);
+    </script>
+</body>
+</html>
