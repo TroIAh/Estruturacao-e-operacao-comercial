@@ -19,12 +19,25 @@
             background-color: #f8fafc;
             padding: 1.5rem;
             border-radius: 1rem;
-            min-height: 100px;
+            min-height: 120px;
             outline: none;
+            resize: vertical;
         }
         .editable-summary:focus {
             border-color: #3b82f6;
             background-color: #ffffff;
+        }
+
+        .summary-output {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         @media print {
@@ -57,7 +70,7 @@
         </div>
     </div>
 
-    <!-- Cabeçalho reduzido -->
+    <!-- Cabeçalho -->
     <header class="bg-blue-800 text-white py-6 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">
@@ -96,14 +109,47 @@
         </div>
     </div>
 
-    <!-- Campo de resumo editável -->
+    <!-- Campo de resumo editável com botões -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="bg-white rounded-xl shadow-md p-6">
             <label class="block text-sm font-bold text-gray-700 mb-2">Resumo da Proposta (edite conforme necessário):</label>
             <div id="proposal-summary" class="editable-summary w-full" contenteditable="true">
                 Esta proposta contempla a estruturação da máquina de vendas da PlugAI Gym através da implementação dos blocos de operação comercial selecionados. Cada bloco tem duração estimada de 3 semanas, totalizando até 12 semanas para a implementação completa. Além disso, incluímos comissionamento sobre novas redes contratadas. Os valores podem ser simulados abaixo.
             </div>
-            <p class="text-xs text-gray-400 mt-2">Clique no texto acima para editar. As alterações serão incluídas no PDF.</p>
+            
+            <!-- Botões para gerenciar o resumo -->
+            <div class="flex flex-wrap gap-3 mt-3">
+                <button onclick="pasteGeneratedSummary()" class="no-print inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition duration-300 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    COLAR RESUMO GERADO
+                </button>
+                <button onclick="toggleSummaryView()" class="no-print inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition duration-300 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    VER RESUMO FORMATADO
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Clique em "COLAR RESUMO GERADO" para inserir a simulação atual no campo acima. Depois, edite se necessário.</p>
+        </div>
+    </div>
+
+    <!-- Área de visualização do resumo formatado (inicialmente oculta) -->
+    <div id="summary-view" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 hidden no-print">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">📋 Resumo Formatado da Simulação</h3>
+            <div id="summary-text" class="summary-output">
+                <!-- Será preenchido dinamicamente -->
+            </div>
+            <button onclick="copySummaryToClipboard()" class="mt-3 inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition duration-300 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                COPIAR RESUMO
+            </button>
         </div>
     </div>
 
@@ -362,26 +408,14 @@
                     </div>
                 </div>
 
-                <!-- Botões de ação: agora com "Gerar Resumo" em vez de WhatsApp -->
+                <!-- Botões de ação -->
                 <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onclick="gerarResumo()" class="no-print inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-extrabold rounded-xl shadow-lg text-white bg-blue-600 hover:bg-blue-700 transition duration-300 transform hover:scale-[1.02]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        GERAR RESUMO FORMATADO
-                    </button>
-                    <button onclick="window.print()" class="no-print inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-extrabold rounded-xl shadow-lg text-white bg-green-500 hover:bg-green-600 transition duration-300 transform hover:scale-[1.02]">
+                    <button onclick="window.print()" class="no-print inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-extrabold rounded-xl shadow-lg text-white bg-blue-500 hover:bg-blue-600 transition duration-300 transform hover:scale-[1.02]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
                         EXPORTAR PDF (IMPRIMIR)
                     </button>
-                </div>
-
-                <!-- Área de resumo formatado -->
-                <div class="mt-8 p-6 bg-white rounded-xl shadow-md no-print">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">📋 Resumo da Simulação (copie e cole):</label>
-                    <textarea id="resumo-texto" rows="8" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-sm" readonly onclick="this.select()">Clique em "GERAR RESUMO" para visualizar.</textarea>
                 </div>
             </div>
         </section>
@@ -457,6 +491,80 @@
             return parseInt(select.value, 10);
         }
 
+        function generateSummaryText() {
+            const modelo = getSelectedRadioValue('commission_model') || 'padrao';
+            const modeloNome = modelo === 'padrao' ? 'Padrão (5%+20%)' : modelo === 'acelerado' ? 'Acelerado (8%+25%)' : 'Premium (12%+30%)';
+            
+            const cenario = getSelectedRadioValue('mensalidade_cenario') || 'cheia';
+            const cenarioTexto = cenario === 'cheia' ? 'cheio (R$ 6.500/unidade)' : 'negociado (R$ 5.525/unidade)';
+            
+            const unidadesPorRede = getUnidadesPorRede();
+            const numRedes = parseInt(getSelectedRadioValue('contracts') || '0', 10);
+            const totalUnidades = numRedes * unidadesPorRede;
+            
+            const blocosMarcados = document.querySelectorAll('.checklist-item.checked').length;
+            
+            // Valores atuais dos displays
+            const totalImplantacao = document.getElementById('display-total-implantacao').innerText;
+            const totalMensalidade = document.getElementById('display-total-mensalidade').innerText;
+            const faturamentoTotal = document.getElementById('display-faturamento-total').innerText;
+            const comissaoImp = document.getElementById('display-implantacao').innerText;
+            const comissaoRec = document.getElementById('display-recorrencia').innerText;
+            const valorBlocos = document.getElementById('display-blocos').innerText;
+            const totalAssessoria = document.getElementById('display-total-assessoria').innerText;
+            const projecaoAnual = document.getElementById('display-acumulado').innerText.replace('Projeção anual: ', '');
+            
+            const summaryText = `*DETALHAMENTO DA SIMULAÇÃO*
+
+*Modelo de Comissão:* ${modeloNome}
+*Cenário de Mensalidade:* ${cenarioTexto}
+*Unidades por Rede:* ${unidadesPorRede}
+*Redes Contratadas:* ${numRedes} (total de ${totalUnidades} unidades)
+*Blocos Contratados (Estruturação):* ${blocosMarcados} (valor: ${valorBlocos})
+
+*Faturamento PlugAI (mês 1):*
+- Implantação: ${totalImplantacao}
+- Mensalidade: ${totalMensalidade}
+- Total: ${faturamentoTotal}
+
+*Remuneração da Assessoria (mês 1):*
+- Comissão implantação: ${comissaoImp}
+- Comissão recorrência: ${comissaoRec}
+- Implementação de blocos: ${valorBlocos}
+- Total: ${totalAssessoria}
+- Projeção anual: ${projecaoAnual}`;
+
+            return summaryText;
+        }
+
+        function pasteGeneratedSummary() {
+            const summaryText = generateSummaryText();
+            const summaryElement = document.getElementById('proposal-summary');
+            summaryElement.innerText = summaryText;
+            showAlert('Resumo gerado e colado com sucesso!');
+        }
+
+        function toggleSummaryView() {
+            const view = document.getElementById('summary-view');
+            const summaryText = generateSummaryText();
+            document.getElementById('summary-text').innerText = summaryText;
+            
+            if (view.classList.contains('hidden')) {
+                view.classList.remove('hidden');
+            } else {
+                view.classList.add('hidden');
+            }
+        }
+
+        function copySummaryToClipboard() {
+            const summaryText = document.getElementById('summary-text').innerText;
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showAlert('Resumo copiado para a área de transferência!');
+            }).catch(() => {
+                showAlert('Erro ao copiar. Tente novamente.');
+            });
+        }
+
         function calculateCommission() {
             try {
                 const implantacaoPorRede = 20000;
@@ -529,77 +637,7 @@
                 document.getElementById('exemplo-mensalidade-negociada').innerText = totalNegociadoRede.toFixed(2).replace('.', ',');
                 document.getElementById('exemplo-total-negociado').innerText = (20000 + totalNegociadoRede).toFixed(2).replace('.', ',');
 
-                // Não geramos mais link do WhatsApp, mas chamamos uma função para atualizar o resumo se desejado
-                // Podemos atualizar o resumo automaticamente ou deixar para o botão.
-                // Vamos atualizar automaticamente ao calcular:
-                gerarResumo();
             } catch (e) { console.error(e); }
-        }
-
-        function gerarResumo() {
-            // Pega os dados atuais
-            const blocos = document.querySelectorAll('.checklist-item.checked').length;
-            const numRedes = parseInt(getSelectedRadioValue('contracts') || '0', 10);
-            const unidadesPorRede = getUnidadesPorRede();
-            const totalUnidades = numRedes * unidadesPorRede;
-            const cenario = getSelectedRadioValue('mensalidade_cenario') || 'cheia';
-            const mensalidadePorUnidade = cenario === 'cheia' ? 6500 : 5525;
-            const modelo = getSelectedRadioValue('commission_model') || 'padrao';
-            let percRec, percImp, modeloNome;
-            if (modelo === 'padrao') { percRec = 0.05; percImp = 0.20; modeloNome = 'Padrão'; }
-            else if (modelo === 'acelerado') { percRec = 0.08; percImp = 0.25; modeloNome = 'Acelerado'; }
-            else { percRec = 0.12; percImp = 0.30; modeloNome = 'Premium'; }
-
-            const totalImplantacao = numRedes * 20000;
-            const totalMensalidade = totalUnidades * mensalidadePorUnidade;
-            const faturamentoTotal = totalImplantacao + totalMensalidade;
-
-            const comissaoImp = totalImplantacao * percImp;
-            const comissaoRec = totalMensalidade * percRec;
-
-            let valorBlocos = 0;
-            if (blocos > 0) {
-                if (blocos === 4) valorBlocos = 3500 * 4;
-                else valorBlocos = 4000 * blocos;
-            }
-
-            const totalAssessoria = comissaoImp + comissaoRec + valorBlocos;
-            const projecaoAnual = comissaoImp + (comissaoRec * 12) + valorBlocos;
-
-            const summaryText = document.getElementById('proposal-summary')?.innerText || 'Resumo da proposta';
-
-            // Monta o texto formatado
-            const resumo = `
-${summaryText}
-
-============================================
-           RESUMO DA SIMULAÇÃO
-============================================
-
-CONFIGURAÇÕES:
-- Blocos contratados: ${blocos} de 4 (valor: ${formatCurrency(valorBlocos)})
-- Modelo de comissionamento: ${modeloNome} (${percImp*100}% implantação + ${percRec*100}% recorrência)
-- Mensalidade: ${cenario === 'cheia' ? 'Cheia (R$ 6.500/unidade)' : 'Negociada (R$ 5.525/unidade)'}
-- Redes contratadas: ${numRedes}
-- Unidades por rede: ${unidadesPorRede}
-- Total de unidades: ${totalUnidades}
-
-FATURAMENTO PLUGAI (MÊS 1):
-- Implantação: ${formatCurrency(totalImplantacao)}
-- Mensalidade: ${formatCurrency(totalMensalidade)}
-- Total: ${formatCurrency(faturamentoTotal)}
-
-REMUNERAÇÃO DA ASSESSORIA (MÊS 1):
-- Comissão de implantação: ${formatCurrency(comissaoImp)}
-- Comissão de recorrência: ${formatCurrency(comissaoRec)}
-- Implementação de blocos: ${formatCurrency(valorBlocos)}
-- Total no primeiro mês: ${formatCurrency(totalAssessoria)}
-- Projeção anual: ${formatCurrency(projecaoAnual)}
-
-============================================
-            `;
-
-            document.getElementById('resumo-texto').value = resumo;
         }
 
         function initializePage() {
