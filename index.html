@@ -98,11 +98,11 @@
                     <p id="quick-comissao-imp" class="text-2xl font-bold">R$ 0</p>
                 </div>
                 <div>
-                    <p class="text-xs opacity-75">Comissão recorrência</p>
+                    <p class="text-xs opacity-75">Comissão recorrência (mensal)</p>
                     <p id="quick-comissao-rec" class="text-2xl font-bold">R$ 0</p>
                 </div>
                 <div>
-                    <p class="text-xs opacity-75">Total assessoria (mês 1)</p>
+                    <p class="text-xs opacity-75">Total (mês 1 + blocos)</p>
                     <p id="quick-total" class="text-2xl font-bold">R$ 0</p>
                 </div>
             </div>
@@ -359,9 +359,33 @@
                     </div>
                 </div>
 
+                <!-- Período de contratação (NOVO) -->
+                <div class="mb-6 p-6 bg-white rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">4. Período de contratação</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                            <input type="radio" name="periodo" value="3" class="form-radio h-5 w-5 text-gray-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">3 meses</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                            <input type="radio" name="periodo" value="6" class="form-radio h-5 w-5 text-gray-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">6 meses</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-gray-500">
+                            <input type="radio" name="periodo" value="9" class="form-radio h-5 w-5 text-gray-600" onchange="calculateCommission()">
+                            <span class="ml-2 text-lg">9 meses</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 bg-green-50 rounded-lg cursor-pointer border-2 has-[:checked]:border-green-500">
+                            <input type="radio" name="periodo" value="12" class="form-radio h-5 w-5 text-green-600" checked onchange="calculateCommission()">
+                            <span class="ml-2 text-lg font-semibold text-green-700">12 meses</span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">*Período total do contrato para projeção da recorrência.</p>
+                </div>
+
                 <!-- Resultado -->
                 <div class="bg-gray-900 text-white rounded-xl p-8 shadow-2xl">
-                    <h3 class="text-2xl font-bold mb-6 text-yellow-400">Projeção para o Primeiro Mês</h3>
+                    <h3 class="text-2xl font-bold mb-6 text-yellow-400">Projeção para o Período</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                         <div class="bg-gray-800 p-4 rounded-lg">
@@ -384,7 +408,7 @@
                             <p id="display-implantacao" class="text-xl font-mono text-white">R$ 0,00</p>
                         </div>
                         <div class="bg-gray-800 p-4 rounded-lg">
-                            <p class="text-gray-400 text-sm">Comissão Recorrência</p>
+                            <p class="text-gray-400 text-sm">Comissão Recorrência (mensal)</p>
                             <p id="display-recorrencia" class="text-xl font-mono text-green-400">R$ 0,00</p>
                         </div>
                         <div class="bg-gray-800 p-4 rounded-lg">
@@ -393,9 +417,9 @@
                             <p class="text-xs text-gray-500" id="detalhe-blocos">1 bloco (R$ 4.000 cada)</p>
                         </div>
                         <div class="bg-gray-800 p-4 rounded-lg">
-                            <p class="text-gray-400 text-sm">Total Assessoria (mês 1)</p>
-                            <p id="display-total-assessoria" class="text-xl font-mono text-white">R$ 4.000,00</p>
-                            <p id="display-acumulado" class="text-xs text-yellow-400 italic">Anual: R$ 4.000,00</p>
+                            <p class="text-gray-400 text-sm">Total no Período</p>
+                            <p id="display-total-periodo" class="text-xl font-mono text-white">R$ 4.000,00</p>
+                            <p id="display-periodo-label" class="text-xs text-yellow-400 italic">12 meses</p>
                         </div>
                     </div>
 
@@ -491,6 +515,10 @@
             return parseInt(select.value, 10);
         }
 
+        function getPeriodoMeses() {
+            return parseInt(getSelectedRadioValue('periodo') || '12', 10);
+        }
+
         function generateSummaryText() {
             const modelo = getSelectedRadioValue('commission_model') || 'padrao';
             const modeloNome = modelo === 'padrao' ? 'Padrão (5%+20%)' : modelo === 'acelerado' ? 'Acelerado (8%+25%)' : 'Premium (12%+30%)';
@@ -503,6 +531,7 @@
             const totalUnidades = numRedes * unidadesPorRede;
             
             const blocosMarcados = document.querySelectorAll('.checklist-item.checked').length;
+            const periodo = getPeriodoMeses();
             
             // Valores atuais dos displays
             const totalImplantacao = document.getElementById('display-total-implantacao').innerText;
@@ -511,8 +540,7 @@
             const comissaoImp = document.getElementById('display-implantacao').innerText;
             const comissaoRec = document.getElementById('display-recorrencia').innerText;
             const valorBlocos = document.getElementById('display-blocos').innerText;
-            const totalAssessoria = document.getElementById('display-total-assessoria').innerText;
-            const projecaoAnual = document.getElementById('display-acumulado').innerText.replace('Projeção anual: ', '');
+            const totalPeriodo = document.getElementById('display-total-periodo').innerText;
             
             const summaryText = `*DETALHAMENTO DA SIMULAÇÃO*
 
@@ -521,18 +549,18 @@
 *Unidades por Rede:* ${unidadesPorRede}
 *Redes Contratadas:* ${numRedes} (total de ${totalUnidades} unidades)
 *Blocos Contratados (Estruturação):* ${blocosMarcados} (valor: ${valorBlocos})
+*Período de Contratação:* ${periodo} meses
 
 *Faturamento PlugAI (mês 1):*
 - Implantação: ${totalImplantacao}
 - Mensalidade: ${totalMensalidade}
 - Total: ${faturamentoTotal}
 
-*Remuneração da Assessoria (mês 1):*
-- Comissão implantação: ${comissaoImp}
-- Comissão recorrência: ${comissaoRec}
-- Implementação de blocos: ${valorBlocos}
-- Total: ${totalAssessoria}
-- Projeção anual: ${projecaoAnual}`;
+*Remuneração da Assessoria:*
+- Comissão implantação (única): ${comissaoImp}
+- Comissão recorrência (mensal): ${comissaoRec}
+- Implementação de blocos (única): ${valorBlocos}
+- **Total no período (${periodo} meses):** ${totalPeriodo}`;
 
             return summaryText;
         }
@@ -599,8 +627,8 @@
                     }
                 }
 
-                const totalAssessoriaMes1 = comissaoImp + comissaoRec + valorBlocos;
-                const projecaoAnualAssessoria = comissaoImp + (comissaoRec * 12) + valorBlocos;
+                const periodoMeses = getPeriodoMeses();
+                const totalAssessoriaPeriodo = comissaoImp + (comissaoRec * periodoMeses) + valorBlocos;
 
                 // Atualizar DOM principal
                 document.getElementById('display-total-implantacao').innerText = formatCurrency(totalImplantacao);
@@ -610,8 +638,8 @@
                 document.getElementById('display-recorrencia').innerText = formatCurrency(comissaoRec);
                 document.getElementById('display-blocos').innerText = formatCurrency(valorBlocos);
                 document.getElementById('detalhe-blocos').innerText = `${blocosMarcados} blocos (${blocosMarcados === 4 ? 'R$ 3.500 cada' : 'R$ 4.000 cada'})`;
-                document.getElementById('display-total-assessoria').innerText = formatCurrency(totalAssessoriaMes1);
-                document.getElementById('display-acumulado').innerText = `Projeção anual: ${formatCurrency(projecaoAnualAssessoria)}`;
+                document.getElementById('display-total-periodo').innerText = formatCurrency(totalAssessoriaPeriodo);
+                document.getElementById('display-periodo-label').innerText = `${periodoMeses} meses`;
 
                 document.getElementById('total-redes').innerText = numRedes;
                 document.getElementById('unidades-por-rede-valor').innerText = unidadesPorRede;
@@ -623,7 +651,7 @@
                 document.getElementById('quick-valor-blocos').innerText = formatCurrency(valorBlocos);
                 document.getElementById('quick-comissao-imp').innerText = formatCurrency(comissaoImp);
                 document.getElementById('quick-comissao-rec').innerText = formatCurrency(comissaoRec);
-                document.getElementById('quick-total').innerText = formatCurrency(totalAssessoriaMes1);
+                document.getElementById('quick-total').innerText = formatCurrency(comissaoImp + comissaoRec + valorBlocos); // mês 1
 
                 // Atualizar textos da seção de viabilidade (exemplos)
                 document.getElementById('unidades-por-rede-exemplo').innerText = unidadesPorRede;
@@ -642,8 +670,9 @@
 
         function initializePage() {
             // Garantir que o bloco 1 esteja marcado (já está no HTML)
-            // Garantir que a opção 0 redes esteja selecionada
+            // Garantir que a opção 0 redes esteja selecionada e período 12 meses
             document.querySelector('input[name="contracts"][value="0"]').checked = true;
+            document.querySelector('input[name="periodo"][value="12"]').checked = true;
             
             // Atualizar informações
             updateBlocosInfo();
